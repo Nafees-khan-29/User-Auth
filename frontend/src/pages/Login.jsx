@@ -3,16 +3,13 @@ import { assets } from '../assets/assets';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
-
-import {  toast} from 'react-toastify';
-
+import { toast } from 'react-toastify';
 
 const Login = () => {
-  
   const Navigate = useNavigate();
-  const { backendUrl, setIsLoggedIn, getUserData  } = useContext(AppContext);
+  const { backendUrl, setIsLoggedIn, getUserData } = useContext(AppContext);
 
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false); // Default is login
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,10 +28,9 @@ const Login = () => {
       const payload = isSignUp ? { name, email, password } : { email, password };
 
       console.log('Backend URL:', backendUrl);
+      console.log('Submitting to:', endpoint);
 
       const { data } = await axios.post(`${backendUrl}${endpoint}`, payload);
-      
-
 
       if (data.success) {
         setIsLoggedIn(true);
@@ -45,7 +41,6 @@ const Login = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'An error occurred');
-      
     } finally {
       setIsLoading(false);
     }

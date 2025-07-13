@@ -4,7 +4,7 @@ import { User } from "../models/userModel.js"; // Add .js extension
 export const getuserdata = async (req, res) => {
     try {
         // Get userId from auth middleware
-        const userId = req.body;
+        const { userId } = req.body;
         
         
         // Find user by ID and exclude sensitive fields

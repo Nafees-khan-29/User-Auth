@@ -2,8 +2,11 @@ import React, { useState, useContext, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import axios from 'axios'; // 🟢 You missed this import
 
 const EmailVerify = () => {
+  axios.defaults.withCredentials = true;
+
   const { userData, backendUrl } = useContext(AppContext);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -11,13 +14,13 @@ const EmailVerify = () => {
   const inputRefs = useRef([]);
 
   const handleOtpChange = (index, value) => {
-    if (isNaN(value)) return;
-    
+    if (!/^\d?$/.test(value)) return; // Allow only single digit
+
     const newOtpDigits = [...otpDigits];
     newOtpDigits[index] = value;
     setOtpDigits(newOtpDigits);
 
-    // Auto focus next input
+    // Auto move to next input
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
@@ -44,10 +47,10 @@ const EmailVerify = () => {
       if (data.success) {
         toast.success('OTP sent successfully');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Failed to send OTP');
       }
     } catch (error) {
-      toast.error('Failed to send OTP');
+      toast.error('Error while sending OTP');
     } finally {
       setIsLoading(false);
     }
@@ -56,28 +59,18 @@ const EmailVerify = () => {
   const handleVerify = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
-      const response = await fetch(`${backendUrl}/api/auth/verify-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userData?._id,
-          otp: otpDigits.join('')
-        }),
-      });
+      const otp = otpDigits.join('');
+      const { data } = await axios.post(`${backendUrl}/api/auth/verify-account`, { otp });
 
-      const data = await response.json();
       if (data.success) {
         toast.success('Email verified successfully');
         navigate('/');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Verification failed');
       }
     } catch (error) {
-      toast.error('Verification failed');
+      toast.error('Error while verifying');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +83,7 @@ const EmailVerify = () => {
           Verify Your Email
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Enter the verification code sent to<br />
+          Enter the verification code sent to <br />
           <span className="font-medium text-blue-600">{userData?.email}</span>
         </p>
       </div>
@@ -98,23 +91,21 @@ const EmailVerify = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleVerify}>
-            <div className="space-y-4">
-              <div className="flex justify-center gap-2">
-                {otpDigits.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={el => inputRefs.current[index] = el}
-                    type="text"
-                    maxLength="1"
-                    value={digit}
-                    onChange={e => handleOtpChange(index, e.target.value)}
-                    onKeyDown={e => handleKeyDown(index, e)}
-                    className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg 
-                             focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                ))}
-              </div>
+            <div className="flex justify-center gap-2">
+              {otpDigits.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => (inputRefs.current[index] = el)}
+                  type="text"
+                  maxLength="1"
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg 
+                           focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  required
+                />
+              ))}
             </div>
 
             <div className="flex flex-col gap-4">

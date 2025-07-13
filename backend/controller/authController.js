@@ -87,11 +87,12 @@ export const login = async (req, res) => {
             expiresIn: '30d',
         });
         res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+             httpOnly: true,
+             secure: process.env.NODE_ENV === 'production',
+             sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',  // ✅ FIXED
+             maxAge: 30 * 24 * 60 * 60 * 1000,
         });
+
         return res.json({
             success: true,
             message: "Login successful"});
@@ -105,25 +106,29 @@ export const login = async (req, res) => {
         }
     }
 // logout authentication function
-    export const logout = async (req, res) => {
-        try {
-            res.clearCookie('token', {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'strict',
-            });
-            return res.json({ success: true, message: "Logout successful" });
-            
-        } catch (error) {
-            return res.json({
-                success: false,
-                message: "Error in logout",
-                error: error.message
-            });
-            
-        }
+export const logout = async (req, res) => {
+    try {
+        // Clear the token cookie
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+            path: '/'
+        });
+
+        return res.status(200).json({ 
+            success: true, 
+            message: "Logout successful" 
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+        return res.status(500).json({
+            success: false,
+            message: "Error in logout",
+            error: error.message
+        });
     }
-// send verification OTP function
+};// send verification OTP function
 export const sendVerifyOtp = async (req, res) => {
     try {
         const {userId} = req.body;
